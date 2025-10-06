@@ -1,0 +1,28 @@
+﻿# build output
+/build/
+/bin/
+*.obj
+*.pdb
+*.idb
+*.ilk
+*.dll
+*.rpi
+*.lib
+*.exp
+
+/_rnd/
+
+# VS user files
+*.user
+*.opendb
+*.VC.db
+/.vscode/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+
+# OS junk
+.DS_Store
+Thumbs.db
