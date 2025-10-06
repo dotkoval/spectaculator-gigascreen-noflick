@@ -66,9 +66,8 @@ rem Developer Command Prompt (или вызов vcvars64.bat) сначала
 cl /nologo /LD /O2 /EHsc /MD /I. ^
   /DGAMMA=24 ^
   /DRETRO_VIBES ^
-  /DPLUGIN_TITLE=\"Gigascreen No-Flick 100% G2.4 (.koval)\" ^
   src\Main_Gigascreen.cpp ^
-  /link /OUT:"build\Gigascreen No-Flick 100% G2.4 (.koval).rpi"
+  /link /OUT:"Gigascreen_100_g24.rpi"
 ```
 
 - `GAMMA=18|20|22|24|25` или опустите для `Linear` смешения цветов.

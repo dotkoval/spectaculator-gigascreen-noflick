@@ -71,8 +71,10 @@ static unsigned s_w = 0, s_h = 0;
 extern "C" RENDER_PLUGIN_INFO* RenderPluginGetInfo(void)
 {
     // Max 60 chars, follow the style used by sample plugins.
-    rpi_strcpy(&MyRPI.Name[0], "Gigascreen No-Flick " NOFLICK_TITLE " " GAMMA_TITLE " (.koval)");
-
+#ifndef PLUGIN_TITLE
+#   define PLUGIN_TITLE "Gigascreen No-Flick " NOFLICK_TITLE " " GAMMA_TITLE " (.koval)"
+#endif
+    rpi_strcpy(&MyRPI.Name[0], PLUGIN_TITLE);
     // 16bpp input format (RGB565) + fixed 2x output scale.
     MyRPI.Flags = RPI_VERSION | RPI_565_SUPP | RPI_OUT_SCL2;
     return &MyRPI;
