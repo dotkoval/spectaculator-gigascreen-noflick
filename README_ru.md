@@ -1,5 +1,5 @@
 # Gigascreen No‑Flick (плагин рендеринга для Spectaculator)
-<p align="right"><a href="README.md">English</a> | Русский</p>
+<p align="right"><a href="README.md">English</a> | <a href="README_ua.md">Українська</a> | Русский</p>
 
 Небольшой плагин для **Spectaculator** (ZX Spectrum эмулятор), который уменьшает мерцание при **Gigascreen** за счёт смешивания последовательных кадров с использованием предвычисленных таблиц (LUT). Плагин распространяется несколькими бинарниками, потому что **в Spectaculator нет API конфигурации плагинов**.
 

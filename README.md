@@ -1,5 +1,5 @@
 # Gigascreen No‑Flick (Spectaculator Render Plugin)
-<p align="right">English | <a href="README_ru.md">Русский</a></p>
+<p align="right">English | <a href="README_ua.md">Українська</a> | <a href="README_ru.md">Русский</a></p>
 
 A small render plugin for **Spectaculator** (ZX Spectrum emulator) that reduces flicker for **Gigascreen** by blending consecutive frames using precomputed lookup tables (LUTs). It ships as multiple binaries because **Spectaculator does not expose runtime configuration** for render plugins.
 
@@ -82,7 +82,7 @@ cl /nologo /LD /O2 /EHsc /MD /I. ^
 - `RETRO_VIBES` → **No‑Flick 80%**, by default (if not set) → **No‑Flick 100%**.
 - `PLUGIN_TITLE` is what Spectaculator shows in the list.
 
-There is a small Python helper that generates LUT headers into `luts/<gammaXX|linear>/<noflickXX>/...`. Using that script is optional for consumers — release binaries already contain all the headers compiled into `.rpi`. But it is might be interesting for curious people who wants to customize blending options.
+There is a small Python helper (`tools/gen_lut.py`) that generates LUT headers into `luts/<gammaXX|linear>/<noflickXX>/...`. Using that script is optional for consumers — release binaries already contain all the headers compiled into `.rpi`. But it is might be interesting for curious people who wants to customize blending options.
 
 ---
 
@@ -93,7 +93,7 @@ There is a small Python helper that generates LUT headers into `luts/<gammaXX|li
 ---
 
 ## Disclaimer
-This is an “as is” side tool I wrote while building **Project AZX** ([Telegram channel](https://t.me/project_azx), [Thread on Spectrum Computing](https://spectrumcomputing.co.uk/forums/viewtopic.php?t=13101)).
+This is an “as is” side project I wrote while working on **Project AZX** ([Telegram channel](https://t.me/project_azx), [Thread on Spectrum Computing](https://spectrumcomputing.co.uk/forums/viewtopic.php?t=13101)).
 If you have ideas or improvements (or CRT comparison captures), feel free to open an Issue or PR :)
 
 .koval'2025
