@@ -2,7 +2,8 @@
 <p align="right">English | <a href="README_ru.md">Русский</a></p>
 
 A small render plugin for **Spectaculator** (ZX Spectrum emulator) that reduces flicker for **Gigascreen** by blending consecutive frames using precomputed lookup tables (LUTs). It ships as multiple binaries because **Spectaculator does not expose runtime configuration** for render plugins.
-> This is not a silver bullet. It works best for Gigascreen content, where two alternating frames intentionally encode color. In regular dynamic scenes (especially true 50 fps motion), blending adjacent frames can soften detail, introduce slight ghosting, and overall look less presentable.
+
+> This is not a silver bullet. It works best for Gigascreen content, where two alternating frames intentionally encode color. In regular dynamic scenes (especially true 50 fps motion), blending adjacent frames can soften detail, introduce slight ghosting, and overall look less presentable. There are a couple of ideas in development on how this could be improved, but for now it stays as it is.
 
 > Built quickly while prototyping my own Gigascreen game (**Project AZX**: [Telegram](https://t.me/project_azx), [Forum](https://spectrumcomputing.co.uk/forums/viewtopic.php?t=13101)). I do not use Spectaculator for day‑to‑day development, but it is very popular in the community — so here is a compatible render plugin. Sources are open; this is a practical, minimal project — no plans to turn it into a full “industrial” build system.
 
@@ -29,10 +30,13 @@ A small render plugin for **Spectaculator** (ZX Spectrum emulator) that reduces 
 - **No‑Flick 80%** → 40/60 (keeps some “retro vibe”: flicker is much softer, but not fully gone).
 
 ### Gamma
-- **Recommendation:** `Gamma = 2.5` (visually closer to a CRT look, to my eye). Your taste may vary: try 2.4 or 2.2.
+- **Recommendation:** `Gamma = 2.4` (visually closer to a CRT look, to my eye). Your taste may vary: try 2.5 or 2.2.
 - Available: `G1.8`, `G2.0`, `G2.2`, `G2.4`, `G2.5`, and `Linear` (no gamma mapping).  
   *Note:* the numeric range looks wide, but the **visual difference is subtle** in this blending context — roughly: 1.8 a bit darker, 2.5 a bit brighter.
 
+Here is an image where you can pick the gamma value for your monitor based on which color best matches the central stripe in the image (a black-and-white checkerboard pattern).
+
+![Gamma Samples](docs/images/gamma-samples.png)
 ---
 
 ## Install
