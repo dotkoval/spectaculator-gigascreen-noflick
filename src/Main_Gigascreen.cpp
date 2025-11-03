@@ -18,19 +18,8 @@
 // - My guess is that Spectaculator operates in RGB565 colorspace only, so no need to support other formats
 // - As RenderPlugins does not support any configuration - options are cooked in separated binaries
 
-#ifndef GAMMA
-#   define GAMMA gamma25
-#endif
-
-#ifdef RETRO_VIBES
-#   define NOFLICK noflick80
-#   define NOFLICK_TITLE "80%"
-#else
-#   define NOFLICK noflick100
-#   define NOFLICK_TITLE "100%"
-#endif
-
 #include "RPI.h"
+#include "lutmgr.h"
 #include <vector>
 #include <cstring>
 
@@ -38,41 +27,23 @@ static std::vector<WORD> s_prev;
 static bool s_havePrev = false;
 static unsigned s_w = 0, s_h = 0;
 
-// Here is some magic with generating path to LUT for different GAMMA and NOFLICK
-#define STR2(x) #x
-#define STR(x) STR2(x)
+static lut5_ptr lut_blend_5b = nullptr;
+static lut6_ptr lut_blend_6b = nullptr;
 
-#if GAMMA == 25
-#   define GDIR gamma25
-#   define GAMMA_TITLE "G2.5"
-#elif GAMMA == 24
-#   define GDIR gamma24
-#   define GAMMA_TITLE "G2.4"
-#elif GAMMA == 22
-#   define GDIR gamma22
-#   define GAMMA_TITLE "G2.2"
-#elif GAMMA == 20
-#   define GDIR gamma20
-#   define GAMMA_TITLE "G2.0"
-#elif GAMMA == 18
-#   define GDIR gamma18
-#   define GAMMA_TITLE "G1.8"
-#else
-#   define GDIR linear
-#   define GAMMA_TITLE "Linear"
-#endif
-
-#define LUT_B5 STR(luts/##GDIR##/##NOFLICK##/lut_blend_5b.h)
-#define LUT_B6 STR(luts/##GDIR##/##NOFLICK##/lut_blend_6b.h)
-
-#include LUT_B5
-#include LUT_B6
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID reserved) {
+    if (reason == DLL_PROCESS_ATTACH) {
+        // init default Gamma LUT
+        lut_blend_5b = lutmgr_init_5b(2.4, 0.5);
+        lut_blend_6b = lutmgr_init_6b(2.4, 0.5);
+    }
+    return TRUE;
+}
 
 extern "C" RENDER_PLUGIN_INFO* RenderPluginGetInfo(void)
 {
     // Max 60 chars, follow the style used by sample plugins.
 #ifndef PLUGIN_TITLE
-#   define PLUGIN_TITLE "Gigascreen No-Flick " NOFLICK_TITLE " " GAMMA_TITLE " (.koval)"
+#   define PLUGIN_TITLE "Gigascreen No-Flick (.koval)"
 #endif
     rpi_strcpy(&MyRPI.Name[0], PLUGIN_TITLE);
     // 16bpp input format (RGB565) + fixed 2x output scale.
