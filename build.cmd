@@ -6,4 +6,4 @@ cl /MD /LD /O2 /EHsc /DWIN32 /D_WINDOWS /DNDEBUG /DRENDERPLUGS_EXPORTS ^
 	src\gigascreen_main.cpp ^
 	src\lut_manager.cpp ^
     src\config_manager.cpp ^
-	/link /OUT:gigascreen.rpi
+	/link /OUT:gigascreen.rpi user32.lib

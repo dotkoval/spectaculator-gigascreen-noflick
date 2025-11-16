@@ -45,6 +45,23 @@ static int mode = 1;
 static lut5_ptr lut_blend_5b = nullptr;
 static lut6_ptr lut_blend_6b = nullptr;
 
+// - Helpers -------------------------------------------------------------------
+static bool prev_shift_tab = false;
+
+static inline bool key_down(int vk) {
+    return (GetAsyncKeyState(vk) & 0x8000) != 0;
+}
+
+bool shift_tab_pressed_once() {
+    bool now = (key_down(VK_TAB) &&
+                (key_down(VK_LSHIFT) /* || key_down(VK_RSHIFT) */));
+
+    bool triggered = (!prev_shift_tab && now);
+    prev_shift_tab = now;
+    return triggered;
+}
+
+// - Plugin init on DLL attachment ---------------------------------------------
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID reserved) {
     if (reason == DLL_PROCESS_ATTACH) {
         // Initialize configuration file
@@ -62,6 +79,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID reserved) {
     return TRUE;
 }
 
+// - Plugin Info ---------------------------------------------------------------
 extern "C" RENDER_PLUGIN_INFO *RenderPluginGetInfo(void) {
     // Max 60 chars, follow the style used by sample plugins.
     rpi_strcpy(&MyRPI.Name[0], PLUGIN_TITLE);
@@ -70,6 +88,7 @@ extern "C" RENDER_PLUGIN_INFO *RenderPluginGetInfo(void) {
     return &MyRPI;
 }
 
+// - MAIN Plugin routine -------------------------------------------------------
 extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
     const unsigned w = rpo->SrcW;
     const unsigned h = rpo->SrcH;
@@ -110,6 +129,10 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
         }
         s_havePrev = true;
     } else {
+        if (shift_tab_pressed_once()) {
+            // rotate Mode
+            mode = (mode + 1) % 2;
+        }
         // Blend prev+curr per pixel, then 2x replicate.
         for (unsigned y = 0; y < h; ++y) {
             const WORD *srow = src + y * sp;
