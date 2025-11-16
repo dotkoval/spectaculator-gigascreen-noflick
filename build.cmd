@@ -5,4 +5,5 @@ call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliar
 cl /MD /LD /O2 /EHsc /DWIN32 /D_WINDOWS /DNDEBUG /DRENDERPLUGS_EXPORTS ^
 	src\gigascreen_main.cpp ^
 	src\lut_manager.cpp ^
-	/link /OUT:Gigascreen.rpi
+    src\config_manager.cpp ^
+	/link /OUT:gigascreen.rpi

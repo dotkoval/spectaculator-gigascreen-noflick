@@ -26,6 +26,7 @@
 //   separated binaries.
 //------------------------------------------------------------------------------
 
+#include "config_manager.h"
 #include "lut_manager.h"
 #include "rpi.h"
 #include <cstring>
@@ -39,15 +40,24 @@
 static std::vector<WORD> s_prev;
 static bool s_havePrev = false;
 static unsigned s_w = 0, s_h = 0;
+static int mode = 1;
 
 static lut5_ptr lut_blend_5b = nullptr;
 static lut6_ptr lut_blend_6b = nullptr;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID reserved) {
     if (reason == DLL_PROCESS_ATTACH) {
-        // init default Gamma LUT
-        lut_blend_5b = lutmgr_init_5b(2.4, 0.5);
-        lut_blend_6b = lutmgr_init_6b(2.4, 0.5);
+        // Initialize configuration file
+        cfg_init("gigascreen.cfg");
+
+        // Read gamma and blending ratio values from the configuration
+        float gamma = cfg_get_float("gamma", 2.4);
+        float ratio = cfg_get_float("ratio", 0.5);
+        mode = cfg_get_int("mode", mode);
+
+        // Initialize default gamma lookup tables (LUTs)
+        lut_blend_5b = lutmgr_init_5b(gamma, ratio);
+        lut_blend_6b = lutmgr_init_6b(gamma, ratio);
     }
     return TRUE;
 }
@@ -109,19 +119,25 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
 
             for (unsigned x = 0; x < w; ++x) {
 
-                unsigned pr = (prow[x] >> 11) & 0x1F;
-                unsigned pg = (prow[x] >> 5) & 0x3F;
-                unsigned pb = prow[x] & 0x1F;
+                // Mode 0: antiflicker is disabled
+                WORD out = srow[x];
 
-                unsigned sr = (srow[x] >> 11) & 0x1F;
-                unsigned sg = (srow[x] >> 5) & 0x3F;
-                unsigned sb = srow[x] & 0x1F;
+                // Mode 1: antiflicker is enabled (Gigascreen mode)
+                if (mode == 1) {
+                    unsigned pr = (prow[x] >> 11) & 0x1F;
+                    unsigned pg = (prow[x] >> 5) & 0x3F;
+                    unsigned pb = prow[x] & 0x1F;
 
-                unsigned cr = lut_blend_5b[pr][sr] << 11;
-                unsigned cg = lut_blend_6b[pg][sg] << 5;
-                unsigned cb = lut_blend_5b[pb][sb];
+                    unsigned sr = (srow[x] >> 11) & 0x1F;
+                    unsigned sg = (srow[x] >> 5) & 0x3F;
+                    unsigned sb = srow[x] & 0x1F;
 
-                WORD out = cr | cg | cb;
+                    unsigned cr = lut_blend_5b[pr][sr] << 11;
+                    unsigned cg = lut_blend_6b[pg][sg] << 5;
+                    unsigned cb = lut_blend_5b[pb][sb];
+
+                    out = cr | cg | cb;
+                }
 
                 drow0[x * 2 + 0] = out;
                 drow0[x * 2 + 1] = out;
