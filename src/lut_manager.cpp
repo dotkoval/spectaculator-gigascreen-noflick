@@ -6,14 +6,14 @@ static unsigned char lut_blend_6b[64][64];
 
 static inline float clampf(float x, float lo, float hi) { return fminf(fmaxf(x, lo), hi); }
 
-static void build_lut(unsigned char *lut, int dim, float gamma, float rate) {
+static void build_lut(unsigned char *lut, int dim, float gamma, float ratio) {
     unsigned char lut_fwd[64];
     unsigned char lut_rev[64];
 
-    gamma = fmaxf(1.0, gamma);       // gamma <= 1 == linear blending
-    rate = clampf(rate, 0.5f, 1.0f); // prio for last frame data
+    gamma = fmaxf(1.0, gamma);         // gamma <= 1 == linear blending
+    ratio = clampf(ratio, 0.5f, 1.0f); // prio for last frame data
 
-    const float irate = 1.0f - rate;
+    const float irate = 1.0f - ratio;
     const float igamma = 1.0f / gamma;
     const float maxvalue = (float)(dim - 1);
 
@@ -34,7 +34,7 @@ static void build_lut(unsigned char *lut, int dim, float gamma, float rate) {
     for (int i = 0; i < dim; i++) {
         unsigned char *row = lut + i * dim;
         for (int j = 0; j < dim; j++) {
-            row[j] = lut_fwd[(unsigned)((lut_rev[i] * irate) + (lut_rev[j] * rate) + 0.5f)];
+            row[j] = lut_fwd[(unsigned)((lut_rev[i] * irate) + (lut_rev[j] * ratio) + 0.5f)];
         }
     }
 }
