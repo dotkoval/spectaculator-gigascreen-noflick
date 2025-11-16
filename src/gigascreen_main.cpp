@@ -1,27 +1,40 @@
-//---------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Gigascreen No-Flick Render Plugin for Spectaculator
 // by oleksandr ".koval" kovalchuk
-//---------------------------------------------------------------------------------------------------------------------------
-
-// Main_Gigascreen.cpp
+//------------------------------------------------------------------------------
+//
 // Simple temporal-blend render plugin (2x) for Spectaculator.
 // Blends previous and current 16bpp frames (RGB565) and outputs
-// a 2x image. Exports are provided by RPI.h.
+// a 2x image. Exports are provided by rpi.h.
+//
+// Platform support:
+// - Windows (Win32/x86) only.
+//   This code uses WinAPI (windows.h, DllMain) and is not portable as-is
+//   to other platforms.
+// - macOS builds are NOT supported, as I currently have no ability to build
+//   or test the plugin on macOS.
 //
 // Build (Win32/x86):
-//   Debug:   cl /LD /Zi /EHsc /MDd /DWIN32 /D_WINDOWS /D_DEBUG /DRENDERPLUGS_EXPORTS Main_Gigascreen.cpp /link /OUT:Gigascreen_d.rpi
-//   Release: cl /LD /O2 /EHsc /MD  /DWIN32 /D_WINDOWS /DNDEBUG /DRENDERPLUGS_EXPORTS Main_Gigascreen.cpp /link /OUT:Gigascreen.rpi
+//   See build.cmd (Windows) for full build commands.
 //
 // Notes:
 // - Architecture must be Win32 (x86). Call vcvars32.bat before building.
-// - No .def needed: RPI.h already does __declspec(dllexport) for both symbols.
-// - My guess is that Spectaculator operates in RGB565 colorspace only, so no need to support other formats
-// - As RenderPlugins does not support any configuration - options are cooked in separated binaries
+// - No .def needed: rpi.h already does __declspec(dllexport) for both symbols.
+// - My guess is that Spectaculator operates in RGB565 colorspace only, so no
+//   need to support other formats.
+// - As RenderPlugins does not support any configuration - options are cooked in
+//   separated binaries.
+//------------------------------------------------------------------------------
 
-#include "RPI.h"
-#include "lutmgr.h"
-#include <vector>
+#include "lut_manager.h"
+#include "rpi.h"
 #include <cstring>
+#include <vector>
+#include <windows.h>
+
+#ifndef PLUGIN_TITLE
+#define PLUGIN_TITLE "Gigascreen No-Flick (.koval)"
+#endif
 
 static std::vector<WORD> s_prev;
 static bool s_havePrev = false;
@@ -39,22 +52,17 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID reserved) {
     return TRUE;
 }
 
-extern "C" RENDER_PLUGIN_INFO* RenderPluginGetInfo(void)
-{
+extern "C" RENDER_PLUGIN_INFO *RenderPluginGetInfo(void) {
     // Max 60 chars, follow the style used by sample plugins.
-#ifndef PLUGIN_TITLE
-#   define PLUGIN_TITLE "Gigascreen No-Flick (.koval)"
-#endif
     rpi_strcpy(&MyRPI.Name[0], PLUGIN_TITLE);
     // 16bpp input format (RGB565) + fixed 2x output scale.
     MyRPI.Flags = RPI_VERSION | RPI_565_SUPP | RPI_OUT_SCL2;
     return &MyRPI;
 }
 
-extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP* rpo)
-{
-    const unsigned w  = rpo->SrcW;
-    const unsigned h  = rpo->SrcH;
+extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
+    const unsigned w = rpo->SrcW;
+    const unsigned h = rpo->SrcH;
     const unsigned sp = rpo->SrcPitch / 2; // WORDs per source row (16 bpp)
     const unsigned dp = rpo->DstPitch / 2; // WORDs per dest   row (16 bpp)
 
@@ -62,7 +70,8 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP* rpo)
     if (w != s_w || h != s_h) {
         s_prev.assign(w * h, 0);
         s_havePrev = false;
-        s_w = w; s_h = h;
+        s_w = w;
+        s_h = h;
     }
 
     // Ensure destination can hold a 2x image.
@@ -71,15 +80,15 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP* rpo)
         return;
     }
 
-    const WORD* src = (const WORD*)rpo->SrcPtr;
-    WORD*       dst = (WORD*)rpo->DstPtr;
+    const WORD *src = (const WORD *)rpo->SrcPtr;
+    WORD *dst = (WORD *)rpo->DstPtr;
 
     if (!s_havePrev) {
         // First frame: pass-through 2x, also seed the previous buffer.
         for (unsigned y = 0; y < h; ++y) {
-            const WORD* srow = src + y * sp;
-            WORD*       drow0 = dst + (y * 2) * dp;
-            WORD*       drow1 = drow0 + dp;
+            const WORD *srow = src + y * sp;
+            WORD *drow0 = dst + (y * 2) * dp;
+            WORD *drow1 = drow0 + dp;
 
             for (unsigned x = 0; x < w; ++x) {
                 WORD px = srow[x];
@@ -93,10 +102,10 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP* rpo)
     } else {
         // Blend prev+curr per pixel, then 2x replicate.
         for (unsigned y = 0; y < h; ++y) {
-            const WORD* srow = src + y * sp;
-            WORD*       drow0 = dst + (y * 2) * dp;
-            WORD*       drow1 = drow0 + dp;
-            WORD*       prow  = &s_prev[y * w];
+            const WORD *srow = src + y * sp;
+            WORD *drow0 = dst + (y * 2) * dp;
+            WORD *drow1 = drow0 + dp;
+            WORD *prow = &s_prev[y * w];
 
             for (unsigned x = 0; x < w; ++x) {
 
@@ -116,8 +125,11 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP* rpo)
 
                 drow0[x * 2 + 0] = out;
                 drow0[x * 2 + 1] = out;
-                prow[x] = srow[x]; // update previous
+
+                // update previous row
+                prow[x] = srow[x];
             }
+            // copy every full row
             std::memcpy(drow1, drow0, (w * 2) * sizeof(WORD));
         }
     }

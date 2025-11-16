@@ -1,26 +1,24 @@
+#include "lut_manager.h"
 #include <math.h>
-#include "lutmgr.h"
 
 static unsigned char lut_blend_5b[32][32];
 static unsigned char lut_blend_6b[64][64];
 
-static inline float clampf(float x, float lo, float hi) {
-    return fminf(fmaxf(x, lo), hi);
-}
+static inline float clampf(float x, float lo, float hi) { return fminf(fmaxf(x, lo), hi); }
 
-static void build_lut(unsigned char* lut, int dim, float gamma, float rate) {
+static void build_lut(unsigned char *lut, int dim, float gamma, float rate) {
     unsigned char lut_fwd[64];
     unsigned char lut_rev[64];
-    
-    gamma = fmaxf(1.0, gamma);          // gamma <= 1 == linear blending
-    rate = clampf(rate, 0.5f, 1.0f);    // prio for last frame data
-    
+
+    gamma = fmaxf(1.0, gamma);       // gamma <= 1 == linear blending
+    rate = clampf(rate, 0.5f, 1.0f); // prio for last frame data
+
     const float irate = 1.0f - rate;
     const float igamma = 1.0f / gamma;
-    const float maxvalue = (float)(dim-1);
-    
+    const float maxvalue = (float)(dim - 1);
+
     // generating sRGB colorspace conversion tables
-    for(int i = 0; i < dim ; i++) {
+    for (int i = 0; i < dim; i++) {
         const float component = (float)i / maxvalue;
 
         // building Linear->sRGB conversion table
@@ -33,10 +31,10 @@ static void build_lut(unsigned char* lut, int dim, float gamma, float rate) {
     }
 
     // building LUT for possible combinations
-    for(int i = 0; i < dim ; i++) {
-        unsigned char* row = lut + i * dim;
-        for(int j = 0; j < dim ; j++) {
-            row[j] = lut_fwd[ (unsigned)((lut_rev[i] * irate) + (lut_rev[j] * rate) + 0.5f) ];
+    for (int i = 0; i < dim; i++) {
+        unsigned char *row = lut + i * dim;
+        for (int j = 0; j < dim; j++) {
+            row[j] = lut_fwd[(unsigned)((lut_rev[i] * irate) + (lut_rev[j] * rate) + 0.5f)];
         }
     }
 }
