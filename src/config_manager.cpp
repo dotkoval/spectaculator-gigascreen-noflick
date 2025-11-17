@@ -6,10 +6,10 @@
 // stored entries.
 //
 // If the file does not exist, it is created automatically with defaults:
-// mode=1
+// mode=2
 // gamma=2.2
 // ratio=0.5
-// fullbright=1
+// fullbright=0
 //
 // Check README.md for more details.
 //------------------------------------------------------------------------------
