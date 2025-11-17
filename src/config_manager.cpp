@@ -98,7 +98,9 @@ static void comma_to_dot(char *s) {
 
 // - Parser --------------------------------------------------------------------
 
-static void cfg_clear(void) { s_count = 0; }
+static void cfg_clear(void) {
+    s_count = 0;
+}
 
 static void cfg_add(const char *key, const char *val) {
     if (!key || !*key || !val)
@@ -173,7 +175,7 @@ bool cfg_init(const char *filename) {
 
     FILE *f = fopen(s_path, "rb");
     if (!f) {
-        const char *defaults = "mode=1\ngamma=2.2\nratio=0.5\nfullbright=1\n";
+        const char *defaults = "mode=1\ngamma=2.2\nratio=0.5\nfullbright=0\n";
         if (!write_text_file(s_path, defaults))
             return false;
     } else {
