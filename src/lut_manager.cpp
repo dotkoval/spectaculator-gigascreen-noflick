@@ -4,7 +4,9 @@
 static unsigned char lut_blend_5b[32][32];
 static unsigned char lut_blend_6b[64][64];
 
-static inline float clampf(float x, float lo, float hi) { return fminf(fmaxf(x, lo), hi); }
+static inline float clampf(float x, float lo, float hi) {
+    return fminf(fmaxf(x, lo), hi);
+}
 
 static void build_lut(unsigned char *lut, int dim, float gamma, float ratio) {
     unsigned char lut_fwd[64];
@@ -39,12 +41,12 @@ static void build_lut(unsigned char *lut, int dim, float gamma, float ratio) {
     }
 }
 
-lut5_ptr lutmgr_init_5b(float gamma, float rate) {
-    build_lut(&lut_blend_5b[0][0], 32, gamma, rate);
+lut5_ptr lutmgr_init_5b(float gamma, float ratio) {
+    build_lut(&lut_blend_5b[0][0], 32, gamma, ratio);
     return (lut5_ptr)lut_blend_5b;
 }
 
-lut6_ptr lutmgr_init_6b(float gamma, float rate) {
-    build_lut(&lut_blend_6b[0][0], 64, gamma, rate);
+lut6_ptr lutmgr_init_6b(float gamma, float ratio) {
+    build_lut(&lut_blend_6b[0][0], 64, gamma, ratio);
     return (lut6_ptr)lut_blend_6b;
 }
