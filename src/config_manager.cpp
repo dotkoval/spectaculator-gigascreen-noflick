@@ -7,8 +7,9 @@
 //
 // If the file does not exist, it is created automatically with defaults:
 // mode=1
-// gamma=2.4
+// gamma=2.2
 // ratio=0.5
+// fullbright=1
 //
 // Check README.md for more details.
 //------------------------------------------------------------------------------
@@ -172,7 +173,7 @@ bool cfg_init(const char *filename) {
 
     FILE *f = fopen(s_path, "rb");
     if (!f) {
-        const char *defaults = "mode=1\ngamma=2.4\nratio=0.5\n";
+        const char *defaults = "mode=1\ngamma=2.2\nratio=0.5\nfullbright=1\n";
         if (!write_text_file(s_path, defaults))
             return false;
     } else {

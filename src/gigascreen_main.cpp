@@ -68,7 +68,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID reserved) {
         cfg_init("gigascreen.cfg");
 
         // Read gamma and blending ratio values from the configuration
-        float gamma = cfg_get_float("gamma", 2.4);
+        float gamma = cfg_get_float("gamma", 2.2);
         float ratio = cfg_get_float("ratio", 0.5);
         mode = cfg_get_int("mode", mode);
 
