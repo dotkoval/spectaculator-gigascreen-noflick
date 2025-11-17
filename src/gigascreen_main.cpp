@@ -45,7 +45,7 @@ static unsigned frame_size = 0;
 static unsigned s_w = 0;
 static unsigned s_h = 0;
 static bool s_havePrev = false;
-static int mode = 1;
+static int mode = 2;
 static int fullbright = 0;
 
 static lut5_ptr lut_blend_5b = nullptr;
