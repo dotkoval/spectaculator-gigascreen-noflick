@@ -1,11 +1,12 @@
 //------------------------------------------------------------------------------
-// Gigascreen No-Flick Render Plugin for Spectaculator
+// Gigascreen No-Flick Render Plugin for Spectaculator (and ZXSpin)
 // by oleksandr ".koval" kovalchuk
 //------------------------------------------------------------------------------
 //
-// Simple temporal-blend render plugin (2x) for Spectaculator.
-// Blends previous and current 16bpp frames (RGB565) and outputs
+// Simple temporal-blend render plugin (2x) for Spectaculator and ZXSpin.
+// Blends 16bpp frames (RGB565) using precomputed LUTs and outputs
 // a 2x image. Exports are provided by rpi.h.
+// Supports Gigascreen (2-frame) and experimental 3Color (3-frame) modes.
 //
 // Platform support:
 // - Windows (Win32/x86) only.
@@ -22,8 +23,8 @@
 // - No .def needed: rpi.h already does __declspec(dllexport) for both symbols.
 // - My guess is that Spectaculator operates in RGB565 colorspace only, so no
 //   need to support other formats.
-// - As RenderPlugins does not support any configuration - options are cooked in
-//   separated binaries.
+// - As RenderPlugins do not expose runtime configuration, options are
+//   controlled via a text config file (gigascreen.cfg) placed next to the DLL.
 //------------------------------------------------------------------------------
 
 #include "config_manager.h"
@@ -59,6 +60,7 @@ static inline bool key_down(int vk) {
     return (GetAsyncKeyState(vk) & 0x8000) != 0;
 }
 
+// Returns true only on the transition "not pressed" -> "pressed" for Shift+Tab.
 bool shift_tab_pressed_once() {
     bool now = (key_down(VK_TAB) && (key_down(VK_LSHIFT) /* || key_down(VK_RSHIFT) */));
 
@@ -79,7 +81,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID reserved) {
         mode = cfg_get_int("mode", mode);
         fullbright = cfg_get_int("fullbright", fullbright);
 
-        // Initialize default gamma lookup tables (LUTs)
+        // Initialize gamma lookup tables (LUTs) according to configuration
         lut_blend_5b = lutmgr_init_5b(gamma, ratio);
         lut_blend_6b = lutmgr_init_6b(gamma, ratio);
     }
@@ -107,7 +109,7 @@ unsigned gigascreen_blend(unsigned p0, unsigned p1) {
     return r | g | b;
 }
 
-// 3Color blending blending in linear light using LUTs
+// 3Color blending in linear light using LUTs
 unsigned tricolor_blend(unsigned p0, unsigned p1, unsigned p2) {
     // Decode RGB components from 5-6-5 encoded space to linear colorspace (sRGB -> linear)
     unsigned frame0_r = lut_rev_5b[(p0 >> 11) & 0x1F];
@@ -146,11 +148,11 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
     const unsigned sp = rpo->SrcPitch / 2; // WORDs per source row (16 bpp)
     const unsigned dp = rpo->DstPitch / 2; // WORDs per dest   row (16 bpp)
 
-    // (Re)allocate previous-frame buffer on size change.
+    // (Re)allocate frame history buffer on size change.
     if (w != s_w || h != s_h) {
         frame_size = w * h;
         frame_history.assign(frame_size * FRAME_HISTORY, 0);
-        s_havePrev = false;
+        s_havePrev = false; // history not initialized yet
         s_w = w;
         s_h = h;
     }
@@ -165,7 +167,7 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
     WORD *dst = (WORD *)rpo->DstPtr;
 
     if (!s_havePrev) {
-        // First frame: pass-through 2x, also seed the ring buffer.
+        // First frame: pass-through 2x, also seed the history ring buffer.
         for (unsigned y = 0; y < h; ++y) {
             const WORD *srow = src + y * sp;
             WORD *drow0 = dst + (y * 2) * dp;
@@ -175,7 +177,7 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
                 WORD px = srow[x];
                 drow0[x * 2 + 0] = px;
                 drow0[x * 2 + 1] = px;
-                // Feeding history buffer with current frame data
+                // Initialize all history slots with the current frame
                 frame_history[y * w + x + frame_size * 0] = px;
                 frame_history[y * w + x + frame_size * 1] = px;
                 frame_history[y * w + x + frame_size * 2] = px;
@@ -191,16 +193,17 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
             mode = (mode + 1) % 3;
         }
 
-        // looping indexes for frames history ring buffer
-        int idx_p0 = last_frame_idx;                       // N-1
+        // Compute indices into the frame history ring buffer (most recent first)
+        int idx_p0 = last_frame_idx;                       // N-1 (most recent stored)
         int idx_p1 = (last_frame_idx + 1) % FRAME_HISTORY; // N-2
         int idx_p2 = (last_frame_idx + 2) % FRAME_HISTORY; // N-3
         int idx_p3 = (last_frame_idx + 3) % FRAME_HISTORY; // N-4
         int idx_p4 = (last_frame_idx + 4) % FRAME_HISTORY; // N-5
-        // shifting ring buffer pointer for last frame
+
+        // Advance write position for the next frame to be stored
         last_frame_idx = (last_frame_idx + FRAME_HISTORY - 1) % FRAME_HISTORY;
 
-        // Blend prev+curr per pixel, then 2x replicate.
+        // Blend per-pixel according to the current mode, then 2x replicate.
         for (unsigned y = 0; y < h; ++y) {
             const WORD *src_row = src + y * sp;
             WORD *dst_row0 = dst + (y * 2) * dp;
@@ -213,7 +216,7 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
 
             for (unsigned x = 0; x < w; ++x) {
 
-                WORD p0 = src_row[x];         // pixel at frame N-0
+                WORD p0 = src_row[x];         // pixel at frame N-0 (current)
                 WORD p1 = prev_frame0_row[x]; // pixel at frame N-1
                 WORD p2 = prev_frame1_row[x]; // pixel at frame N-2
                 WORD p3 = prev_frame2_row[x]; // pixel at frame N-3
