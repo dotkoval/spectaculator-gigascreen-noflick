@@ -40,8 +40,9 @@
 // Keep last N-frames for 3Color mode evaluation
 #define FRAME_HISTORY 5
 
-static std::vector<WORD> frame_history;
+static std::vector<WORD> frame_history; // ring buffer for frame history
 static unsigned frame_size = 0;
+static unsigned last_frame_idx = 0;
 static unsigned s_w = 0;
 static unsigned s_h = 0;
 static bool s_havePrev = false;
@@ -164,7 +165,7 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
     WORD *dst = (WORD *)rpo->DstPtr;
 
     if (!s_havePrev) {
-        // First frame: pass-through 2x, also seed the previous buffer.
+        // First frame: pass-through 2x, also seed the ring buffer.
         for (unsigned y = 0; y < h; ++y) {
             const WORD *srow = src + y * sp;
             WORD *drow0 = dst + (y * 2) * dp;
@@ -174,7 +175,7 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
                 WORD px = srow[x];
                 drow0[x * 2 + 0] = px;
                 drow0[x * 2 + 1] = px;
-                // Feeding history buffer with current frame
+                // Feeding history buffer with current frame data
                 frame_history[y * w + x + frame_size * 0] = px;
                 frame_history[y * w + x + frame_size * 1] = px;
                 frame_history[y * w + x + frame_size * 2] = px;
@@ -189,16 +190,26 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
             // rotate Mode
             mode = (mode + 1) % 3;
         }
+
+        // looping indexes for frames history ring buffer
+        int idx_p0 = last_frame_idx;                       // N-1
+        int idx_p1 = (last_frame_idx + 1) % FRAME_HISTORY; // N-2
+        int idx_p2 = (last_frame_idx + 2) % FRAME_HISTORY; // N-3
+        int idx_p3 = (last_frame_idx + 3) % FRAME_HISTORY; // N-4
+        int idx_p4 = (last_frame_idx + 4) % FRAME_HISTORY; // N-5
+        // shifting ring buffer pointer for last frame
+        last_frame_idx = (last_frame_idx + FRAME_HISTORY - 1) % FRAME_HISTORY;
+
         // Blend prev+curr per pixel, then 2x replicate.
         for (unsigned y = 0; y < h; ++y) {
             const WORD *src_row = src + y * sp;
             WORD *dst_row0 = dst + (y * 2) * dp;
             WORD *dst_row1 = dst_row0 + dp;
-            WORD *prev_frame0_row = &frame_history[y * w + frame_size * 0];
-            WORD *prev_frame1_row = &frame_history[y * w + frame_size * 1];
-            WORD *prev_frame2_row = &frame_history[y * w + frame_size * 2];
-            WORD *prev_frame3_row = &frame_history[y * w + frame_size * 3];
-            WORD *prev_frame4_row = &frame_history[y * w + frame_size * 4];
+            WORD *prev_frame0_row = &frame_history[y * w + frame_size * idx_p0];
+            WORD *prev_frame1_row = &frame_history[y * w + frame_size * idx_p1];
+            WORD *prev_frame2_row = &frame_history[y * w + frame_size * idx_p2];
+            WORD *prev_frame3_row = &frame_history[y * w + frame_size * idx_p3];
+            WORD *prev_frame4_row = &frame_history[y * w + frame_size * idx_p4];
 
             for (unsigned x = 0; x < w; ++x) {
 
@@ -226,11 +237,6 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
                         // fallback to Gigascreen mode
                         out = gigascreen_blend(p0, p1);
                     }
-                    // shifting history for the pixel
-                    prev_frame4_row[x] = p4;
-                    prev_frame3_row[x] = p3;
-                    prev_frame2_row[x] = p2;
-                    prev_frame1_row[x] = p1;
                     break;
 
                 // Mode 1: antiflicker is enabled (Gigascreen only)
@@ -242,8 +248,8 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
                 dst_row0[x * 2 + 0] = out;
                 dst_row0[x * 2 + 1] = out;
 
-                // update previous frame
-                prev_frame0_row[x] = p0;
+                // store current pixel in the newest history slot
+                prev_frame4_row[x] = p0;
             }
             // copy every full row
             std::memcpy(dst_row1, dst_row0, (w * 2) * sizeof(WORD));
