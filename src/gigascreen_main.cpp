@@ -132,6 +132,18 @@ unsigned tricolor_blend(unsigned p0, unsigned p1, unsigned p2) {
     return r | g | b;
 }
 
+// Check if RGB565 pixel has more than one color component
+static inline bool rgb565_has_multi_component(unsigned int c) {
+
+    // Components
+    unsigned r = c & 0b1111100000000000; // Red
+    unsigned g = c & 0b0000011111100000; // Green
+    unsigned b = c & 0b0000000000011111; // Blue
+
+    // More than one non-zero component?
+    return ((r != 0) + (g != 0) + (b != 0)) > 1;
+}
+
 // - Plugin Info ---------------------------------------------------------------
 extern "C" RENDER_PLUGIN_INFO *RenderPluginGetInfo(void) {
     // Max 60 chars, follow the style used by sample plugins.
@@ -225,13 +237,18 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
 
                 // Mode 0: antiflicker is disabled (fallback option)
                 WORD out = p0;
+                bool multi_components;
 
                 switch (mode) {
                 // Mode 2: antiflicker is enabled (Gigascreen+3Color)
                 case 2:
                     // 3Color simple check
-                    if (p0 == p3 && p1 == p4 && p2 == p5) {
-                        // Fullbright blending (simple mix, no gamma correction)
+                    multi_components = rgb565_has_multi_component(p0) ||
+                                       rgb565_has_multi_component(p1) ||
+                                       rgb565_has_multi_component(p2);
+
+                    if (!multi_components && p0 == p3 && p1 == p4 && p2 == p5) {
+                        //  Fullbright blending (simple mix, no gamma correction)
                         if (fullbright)
                             out = p0 | p1 | p2;
                         else
