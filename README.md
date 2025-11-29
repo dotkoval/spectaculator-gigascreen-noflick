@@ -78,6 +78,7 @@ If the file is missing, it will be created automatically with the following defa
 mode=2
 gamma=2.2
 ratio=0.5
+motion_check=0
 fullbright=0
 ```
 
@@ -106,7 +107,7 @@ Gamma correction is applied during color blending.
   ![Gamma Samples](docs/images/gamma-samples.png)
 
 #### `ratio`
-Blend ratio between the current and previous frame in Gigascreen mode.
+Blend ratio between the current and previous frame in **Gigascreen mode**.
 
 - Valid range: **0.5 … 1.0**
 - **0.5** → 50/50, complete flicker removal  
@@ -115,9 +116,14 @@ Blend ratio between the current and previous frame in Gigascreen mode.
 > Note: the `ratio` parameter affects **only Gigascreen mode**.  
 > In 3Color mode, blending is always performed in a way that eliminates flicker, regardless of `ratio`.
 
+#### `motion_check`
+Performs a simple motion check to reduce blending artifacts (blurred details) in **Gigascreen mode**.
+
+- **0** - disabled (always perform blending)
+- **1** - enabled (skip blending when the previous frame indicates possible motion)
 
 #### `fullbright`
-Controls blending behavior in 3Color mode:
+Controls blending behavior in **3Color mode**:
 
 - **0** - gamma-correct blending (more accurate)
 - **1** - additive blending (“full bright”), not physically correct but may approximate the visual intent of early 3Color experiments
