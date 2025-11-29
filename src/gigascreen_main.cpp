@@ -38,6 +38,13 @@
 #define PLUGIN_TITLE "Gigascreen No-Flick (.koval)"
 #endif
 
+// Default configuration values
+#define DEFAULT_MODE 2
+#define DEFAULT_GAMMA 2.2
+#define DEFAULT_RATIO 0.5
+#define DEFAULT_FULLBRIGHT 0
+#define DEFAULT_MOTION_DETECTION 0
+
 // Keep last N-frames for 3Color mode evaluation
 #define FRAME_HISTORY 5
 
@@ -47,8 +54,9 @@ static unsigned last_frame_idx = 0;
 static unsigned s_w = 0;
 static unsigned s_h = 0;
 static bool s_havePrev = false;
-static int mode = 2;
-static int fullbright = 0;
+static int mode = DEFAULT_MODE;
+static int fullbright = DEFAULT_FULLBRIGHT;
+static int motion_check = DEFAULT_MOTION_DETECTION;
 
 static lut5_ptr lut_blend_5b = nullptr;
 static lut6_ptr lut_blend_6b = nullptr;
@@ -76,10 +84,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID reserved) {
         cfg_init("gigascreen.cfg");
 
         // Read gamma and blending ratio values from the configuration
-        float gamma = cfg_get_float("gamma", 2.2);
-        float ratio = cfg_get_float("ratio", 0.5);
+        float gamma = cfg_get_float("gamma", DEFAULT_GAMMA);
+        float ratio = cfg_get_float("ratio", DEFAULT_RATIO);
         mode = cfg_get_int("mode", mode);
         fullbright = cfg_get_int("fullbright", fullbright);
+        motion_check = cfg_get_int("motion_check", motion_check);
 
         // Initialize gamma lookup tables (LUTs) according to configuration
         lut_blend_5b = lutmgr_init_5b(gamma, ratio);
@@ -255,13 +264,15 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
                             out = tricolor_blend(p0, p1, p2);
                     } else {
                         // fallback to Gigascreen mode
-                        out = gigascreen_blend(p0, p1);
+                        if (!motion_check || (p0 == p2 && p0 != p1 && p1 != p2))
+                            out = gigascreen_blend(p0, p1);
                     }
                     break;
 
                 // Mode 1: antiflicker is enabled (Gigascreen only)
                 case 1:
-                    out = gigascreen_blend(p0, p1);
+                    if (!motion_check || (p0 == p2 && p0 != p1))
+                        out = gigascreen_blend(p0, p1);
                     break;
                 }
 

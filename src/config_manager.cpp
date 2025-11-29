@@ -175,7 +175,7 @@ bool cfg_init(const char *filename) {
 
     FILE *f = fopen(s_path, "rb");
     if (!f) {
-        const char *defaults = "mode=2\ngamma=2.2\nratio=0.5\nfullbright=0\n";
+        const char *defaults = "mode=2\ngamma=2.2\nratio=0.5\nmotion_check=0\nfullbright=0\n";
         if (!write_text_file(s_path, defaults))
             return false;
     } else {
