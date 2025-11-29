@@ -90,7 +90,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID reserved) {
 
 // - Blending functions --------------------------------------------------------
 // Gigascreen blending via LUTs
-unsigned gigascreen_blend(unsigned p0, unsigned p1) {
+static inline unsigned gigascreen_blend(unsigned p0, unsigned p1) {
     // Extract RGB pixel components for current frame (5-6-5 packed format)
     unsigned frame0_r = (p0 >> 11) & 0x1F;
     unsigned frame0_g = (p0 >> 5) & 0x3F;
@@ -110,7 +110,7 @@ unsigned gigascreen_blend(unsigned p0, unsigned p1) {
 }
 
 // 3Color blending in linear light using LUTs
-unsigned tricolor_blend(unsigned p0, unsigned p1, unsigned p2) {
+static inline unsigned tricolor_blend(unsigned p0, unsigned p1, unsigned p2) {
     // Decode RGB components from 5-6-5 encoded space to linear colorspace (sRGB -> linear)
     unsigned frame0_r = lut_rev_5b[(p0 >> 11) & 0x1F];
     unsigned frame0_g = lut_rev_6b[(p0 >> 5) & 0x3F];
