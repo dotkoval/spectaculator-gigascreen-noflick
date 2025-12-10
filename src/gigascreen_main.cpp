@@ -251,6 +251,9 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
                 switch (mode) {
                 // Mode 2: antiflicker is enabled (Gigascreen+3Color)
                 case 2:
+                    // skip static pixels
+                    if (p0 == p1 && p0 == p2)
+                        break;
                     // 3Color simple check
                     multi_components = rgb565_has_multi_component(p0) ||
                                        rgb565_has_multi_component(p1) ||
@@ -271,6 +274,9 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
 
                 // Mode 1: antiflicker is enabled (Gigascreen only)
                 case 1:
+                    // skip static pixels
+                    if (p0 == p1 && p0 == p2)
+                        break;
                     if (!motion_check || (p0 == p2 && p0 != p1))
                         out = gigascreen_blend(p0, p1);
                     break;
