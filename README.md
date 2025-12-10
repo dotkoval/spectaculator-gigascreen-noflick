@@ -113,8 +113,7 @@ Blend ratio between the current and previous frame in **Gigascreen mode**.
 - **0.5** → 50/50, complete flicker removal  
 - **Values closer to 1.0** → more flicker, but stronger retro feel :)
 
-> Note: the `ratio` parameter affects **only Gigascreen mode**.  
-> In 3Color mode, blending is always performed in a way that eliminates flicker, regardless of `ratio`.
+> Note: the `ratio` parameter doesn't affect the **Fullbright** 3Color mode.
 
 #### `motion_check`
 Performs a simple motion check to reduce blending artifacts (blurred details) in **Gigascreen mode**.

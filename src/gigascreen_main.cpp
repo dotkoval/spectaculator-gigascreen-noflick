@@ -54,6 +54,8 @@ static unsigned last_frame_idx = 0;
 static unsigned s_w = 0;
 static unsigned s_h = 0;
 static bool s_havePrev = false;
+static float gamma = DEFAULT_GAMMA;
+static float ratio = DEFAULT_RATIO;
 static int mode = DEFAULT_MODE;
 static int fullbright = DEFAULT_FULLBRIGHT;
 static int motion_check = DEFAULT_MOTION_DETECTION;
@@ -83,9 +85,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID reserved) {
         // Initialize configuration file
         cfg_init("gigascreen.cfg");
 
-        // Read gamma and blending ratio values from the configuration
-        float gamma = cfg_get_float("gamma", DEFAULT_GAMMA);
-        float ratio = cfg_get_float("ratio", DEFAULT_RATIO);
+        // Read the configuration file and update parameters
+        gamma = cfg_get_float("gamma", gamma);
+        ratio = cfg_get_float("ratio", ratio);
         mode = cfg_get_int("mode", mode);
         fullbright = cfg_get_int("fullbright", fullbright);
         motion_check = cfg_get_int("motion_check", motion_check);
@@ -120,6 +122,11 @@ static inline unsigned gigascreen_blend(unsigned p0, unsigned p1) {
 
 // 3Color blending in linear light using LUTs
 static inline unsigned tricolor_blend(unsigned p0, unsigned p1, unsigned p2) {
+    //  Fullbright blending 
+    if (fullbright) {
+        return p0 | p1 | p2; // simple mix, no gamma correction, no ratio 
+    }
+
     // Decode RGB components from 5-6-5 encoded space to linear colorspace (sRGB -> linear)
     unsigned frame0_r = lut_rev_5b[(p0 >> 11) & 0x1F];
     unsigned frame0_g = lut_rev_6b[(p0 >> 5) & 0x3F];
@@ -134,9 +141,14 @@ static inline unsigned tricolor_blend(unsigned p0, unsigned p1, unsigned p2) {
     unsigned frame2_b = lut_rev_5b[p2 & 0x1F];
 
     // Encode averaged linear components back to 5-6-5 encoded space (linear -> sRGB)
-    unsigned r = lut_fwd_5b[(frame0_r + frame1_r + frame2_r) / 3] << 11;
-    unsigned g = lut_fwd_6b[(frame0_g + frame1_g + frame2_g) / 3] << 5;
-    unsigned b = lut_fwd_5b[(frame0_b + frame1_b + frame2_b) / 3];
+    const float ratio_3c = (1.0 - ratio) * 2.0;
+    const float ratio_rev = 1.0 - ratio_3c;
+    unsigned r =
+        lut_fwd_5b[int((frame0_r + frame1_r + frame2_r) / 3 * ratio_3c + frame0_r * ratio_rev)] << 11;
+    unsigned g =
+        lut_fwd_6b[int((frame0_g + frame1_g + frame2_g) / 3 * ratio_3c + frame0_g * ratio_rev)] << 5;
+    unsigned b =
+        lut_fwd_5b[int((frame0_b + frame1_b + frame2_b) / 3 * ratio_3c + frame0_b * ratio_rev)];
 
     return r | g | b;
 }
@@ -260,11 +272,7 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
                                        rgb565_has_multi_component(p2);
 
                     if (!multi_components && p0 == p3 && p1 == p4 && p2 == p5) {
-                        //  Fullbright blending (simple mix, no gamma correction)
-                        if (fullbright)
-                            out = p0 | p1 | p2;
-                        else
-                            out = tricolor_blend(p0, p1, p2);
+                        out = tricolor_blend(p0, p1, p2);
                     } else {
                         // fallback to Gigascreen mode
                         if (!motion_check || (p0 == p2 && p0 != p1 && p1 != p2))
