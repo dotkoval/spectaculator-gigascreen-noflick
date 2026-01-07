@@ -80,6 +80,7 @@ gamma=2.2
 ratio=0.5
 motion_check=0
 fullbright=0
+show_banner=1
 ```
 
 ### Parameters
@@ -113,7 +114,7 @@ Blend ratio between the current and previous frame in **Gigascreen mode**.
 - **0.5** → 50/50, complete flicker removal  
 - **Values closer to 1.0** → more flicker, but stronger retro feel :)
 
-> Note: the `ratio` parameter doesn't affect the **Fullbright** 3Color mode.
+  *Note:* the `ratio` parameter doesn't affect the **Fullbright** 3Color mode.
 
 #### `motion_check`
 Performs a simple motion check to reduce blending artifacts (blurred details) in **Gigascreen mode**.
@@ -126,6 +127,14 @@ Controls blending behavior in **3Color mode**:
 
 - **0** - gamma-correct blending (more accurate)
 - **1** - additive blending (“full bright”), not physically correct but may approximate the visual intent of early 3Color experiments
+
+#### `show_banner`
+Show or hide the startup notification banner with plugin information.
+
+- **0** - disabled
+- **1** - enabled (default)
+
+  When enabled, a short on-screen message is shown when the plugin is initialized, indicating the plugin name, version, and available hotkey.
 
 ---
 
