@@ -178,8 +178,9 @@ Gamma-корекція, яка застосовується під час змі
 
 ---
 
-## Посилання / довідка
-- sRGB colorspace in Gigascreen: https://hype.retroscene.org/blog/graphics/808.html  
+## Подяки та джерела
+- Для екранних сповіщень використовується шрифт **Lander Bold** від DamienG: https://damieng.com/zx-origins
+- sRGB color space in Gigascreen: https://hype.retroscene.org/blog/graphics/808.html  
 - sRGB transfer functions (linear↔sRGB): https://en.wikipedia.org/wiki/SRGB
 
 ---

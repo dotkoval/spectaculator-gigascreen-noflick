@@ -178,8 +178,9 @@ Everything required to compile the plugin is included in the repository — see 
 
 ---
 
-## References / background
-- sRGB colorspace in Gigascreen: https://hype.retroscene.org/blog/graphics/808.html  
+## Credits and references
+- On-screen notifications use the **Lander Bold** font by DamienG: https://damieng.com/zx-origins  
+- sRGB color space in Gigascreen: https://hype.retroscene.org/blog/graphics/808.html  
 - sRGB transfer functions (linear↔sRGB): https://en.wikipedia.org/wiki/SRGB
 
 ---

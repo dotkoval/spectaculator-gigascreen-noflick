@@ -178,8 +178,9 @@ show_banner=1
 
 ---
 
-## Ссылки / источники
-- sRGB colorspace in Gigascreen: https://hype.retroscene.org/blog/graphics/808.html  
+## Благодарности и источники
+- Для экранных уведомлений используется шрифт **Lander Bold** от DamienG: https://damieng.com/zx-origins  
+- sRGB color space in Gigascreen: https://hype.retroscene.org/blog/graphics/808.html  
 - sRGB transfer functions (linear↔sRGB): https://en.wikipedia.org/wiki/SRGB
 
 ---
