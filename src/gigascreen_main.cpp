@@ -29,6 +29,7 @@
 
 #include "config_manager.h"
 #include "lut_manager.h"
+#include "notifications_manager.h"
 #include "rpi.h"
 #include <cstring>
 #include <vector>
@@ -37,6 +38,9 @@
 #ifndef PLUGIN_TITLE
 #define PLUGIN_TITLE "Gigascreen No-Flick (.koval)"
 #endif
+#ifndef PLUGIN_VERSION
+#define PLUGIN_VERSION "1.2"
+#endif
 
 // Default configuration values
 #define DEFAULT_MODE 2
@@ -44,6 +48,7 @@
 #define DEFAULT_RATIO 0.5
 #define DEFAULT_FULLBRIGHT 0
 #define DEFAULT_MOTION_DETECTION 0
+#define DEFAULT_SHOW_BANNER 1
 
 // Keep last N-frames for 3Color mode evaluation
 #define FRAME_HISTORY 5
@@ -59,6 +64,7 @@ static float ratio = DEFAULT_RATIO;
 static int mode = DEFAULT_MODE;
 static int fullbright = DEFAULT_FULLBRIGHT;
 static int motion_check = DEFAULT_MOTION_DETECTION;
+static int show_banner = DEFAULT_SHOW_BANNER;
 
 static lut5_ptr lut_blend_5b = nullptr;
 static lut6_ptr lut_blend_6b = nullptr;
@@ -91,6 +97,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID reserved) {
         mode = cfg_get_int("mode", mode);
         fullbright = cfg_get_int("fullbright", fullbright);
         motion_check = cfg_get_int("motion_check", motion_check);
+        show_banner = cfg_get_int("show_banner", show_banner);
 
         // Initialize gamma lookup tables (LUTs) according to configuration
         lut_blend_5b = lutmgr_init_5b(gamma, ratio);
@@ -220,10 +227,14 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
             std::memcpy(drow1, drow0, (w * 2) * sizeof(WORD));
         }
         s_havePrev = true;
+
+        // Initialize notification manager
+        notification_init(dp, w, show_banner, PLUGIN_VERSION);
     } else {
         if (shift_tab_pressed_once()) {
             // rotate Mode
             mode = (mode + 1) % 3;
+            notification_update(mode, gamma, ratio, motion_check);
         }
 
         // Compute indices into the frame history ring buffer (most recent first)
@@ -300,6 +311,7 @@ extern "C" void RenderPluginOutput(RENDER_PLUGIN_OUTP *rpo) {
             std::memcpy(dst_row1, dst_row0, (w * 2) * sizeof(WORD));
         }
     }
+    notification_draw(dst);
 
     // Report actual output size.
     rpo->OutW = w * 2;
